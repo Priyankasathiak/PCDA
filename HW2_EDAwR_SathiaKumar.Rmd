@@ -1,0 +1,361 @@
+---
+title: "HW2-EDA with R - Part1: Plotting"
+author: "Priyanka"
+date: "September 29, 2019"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Step 1 - Familiarize yourself with the data and the assignment
+
+In this assignment you'll do some exploratory data analysis
+with R on a dataset of US census information based on the [American Community Survey](https://www.census.gov/programs-surveys/acs/). The version of
+this data that we'll be using is from a Kaggle dataset. See
+https://www.kaggle.com/muonneutrino/us-census-demographic-data/data and look
+at the column metadata for the county level table to see what the various
+columns mean. The official documentation for the ACS data can be found at
+https://www2.census.gov/programs-surveys/acs/tech_docs/subject_definitions/2017_ACSSubjectDefinitions.pdf.
+
+As we did in class, you'll be creating an R Markdown document to
+both prepare a dataset and do some analysis as well as to document the
+steps you did (and answer some questions I'll throw at you).
+
+You'll notice a few "Hacker Extra" tasks
+thrown in. These are for those of you who want to go a little above and beyond
+and attempt some more challenging tasks. And, feel free to do a some free form
+Hacker Extra style work yourself - in other words, do something beyond what
+was asked. You'll learn more.
+
+## Step 2 - Create a new R Markdown document
+
+Save this file as a new R Markdown document and name it **HW2_EDAwR_[_your last name_].Rmd**. Mine would
+be called **HW2_EDAwR_isken.Rmd**. Save it into the same folder as this file. 
+
+This will be your working directory. 
+
+Create a new R Project based on this working directory.
+
+**Hacker Extra** - Put this project folder under version control using git. Only
+track the .R file, the .Rmd file and your .gitignore file. Create a remote repo
+for this homework assignment in your GitHub account. Periodically push your commits
+to GitHub. When done with the assignment, paste in the URL of your GitHub project
+so that I can go look at it.
+
+## Step 3 - Explore data folder
+
+Inside of the main project folder you'll find the data files for this assignment in a subfolder called `data/`.
+
+- **acs2017_census_tract_data.csv**
+- **acs2017_county_data.csv**
+- **us_census_bureau_regions_and_divisions.csv**
+- **county.csv**
+- **county_MI.csv**
+
+The first two files are from the Kaggle site for this dataset. The two files,
+**county.csv** and **county_MI.csv**, are files that I created. The first
+contains county level data from all states and the other just data from
+Michigan. The R script, **census_data_prep.R** was used to create these files
+and to merge information from the **us_census_bureau_regions_and_divisions.csv**
+file with the county data. **You do NOT need to rerun the census_data_prep.R file.** I'm
+including it and encouraging you to take a look through it to get a sense of what a
+typical data prep script might look like. We'll be learning to do all of the things
+shown in that file.
+
+You might want to use shell commands or a text editor like Geany to snoop the files a bit.
+
+
+## Step 4 - Complete the following R tasks and answer questions
+
+Now you'll need to complete the following tasks in R. Just like we did in class, you should
+use a combination of markdown text (be concise, no need to write tons of text) 
+to explain what you are doing and R code chunks to actually do it.
+When you are done, use the "Knit" button to generate an HTML file from your R Markdown.
+
+Note that if you have errors in your R code, **knitr** will stop at the error
+and won't create an html file. Sooo, you should comment out R code that has
+errors and write a little comment stating that it's an error. Keep doing this
+until you successfully knit an html file based on your R Markdown document.
+You'll be submitting both the html file as well as the Rmd file.
+
+You'll be submitting BOTH the completed R Markdown file as well as the generated HTML file. You'll notice that I've left some empty code chunks
+as well as some partially filled in code chunks. Of course, feel free to
+add more code chunks as needed.
+
+Let's load a few libraries we'll need:
+
+```{r}
+library(ggplot2)
+```
+
+
+### Problem 1 - Get the data into a dataframe
+
+You should read the **county.csv** file into a data frame named county_df and
+**county_mi_df.csv** into a data frame named county_mi_df.
+
+```{r read_countydata}
+county_df <- read.csv(file = '/home/pcda/Desktop/hw2_files/data/county.csv')
+county_mi_df <- read.csv(file = '/home/pcda/Desktop/hw2_files/data/county_MI.csv')
+
+```
+
+* What does each row represent?
+
+> Each row in the data set represents the US census tracts 
+
+Check the structure of each data.frame and use the `summary` function to begin
+exploring the data. 
+
+* Are there any NA values? 
+* What differences do you notice between the structure of the two data frames.
+
+
+```{r}
+str(county_df)
+str(county_mi_df)
+summary(county_df)
+summary(county_mi_df)
+```
+
+> Yes! Data frame county_df has 1 NA in ChildPoverty columns
+
+**Unless otherwise specified, you should use the ggplot2 package for all of the
+following plots.**
+
+### Problem 2 - Basic plots for Income
+
+Create a histogram and a kernel density plot for Income and for IncomePerCap for the entire US (i.e. use the `county_df` dataframe.) The Income field is median income for the county and IncomePerCap is aggregate income divided by population size, for the county.
+
+In addition, compute and display the following statistics for Income and IncomePerCap:
+
+* mean and median
+* standard deviation
+* min, max and range
+* 95th and 99th percentile
+* IQR
+* coefficient of variation
+
+
+```{r summary_stats}
+summarystats_Income <- function(Income_stats) {
+  cat("----------------------------\n")
+  cat("Statistics for Income\n")
+  cat("----------------------------\n")
+  cat(sprintf("Mean: %.2f\n",mean(Income_stats)))
+  cat(sprintf("Median: %.2f\n",median(Income_stats)))
+  cat(sprintf("Min: %.2f\n",min(Income_stats)))
+  cat(sprintf("Max: %.2f\n",max(Income_stats))) 
+  cat(sprintf("Range: %.2f\n",max(Income_stats) - min(Income_stats)))
+  cat(sprintf("95th percentile: %.2f\n",quantile(Income_stats,0.95)))
+  cat(sprintf("99th percentile: %.2f\n",quantile(Income_stats,0.99)))
+  cat(sprintf("IQR: %.2f\n",quantile(Income_stats,0.75) - quantile(Income_stats,0.25)))
+  cat(sprintf("coefficient of variation: %.2f\n",sd(Income_stats)/mean(Income_stats)))
+  cat("----------------------------\n")
+}
+
+summarystats_IncomePerCap <- function(IncomePerCap_stats) {
+  cat("Statistics for IncomePerCap\n")
+  cat("----------------------------\n")
+  cat(sprintf("Mean: %.2f\n",mean(IncomePerCap_stats)))
+  cat(sprintf("Median: %.2f\n",median(IncomePerCap_stats)))
+  cat(sprintf("Min: %.2f\n",min(IncomePerCap_stats)))
+  cat(sprintf("Max: %.2f\n",max(IncomePerCap_stats))) 
+  cat(sprintf("Range: %.2f\n",max(IncomePerCap_stats) - min(IncomePerCap_stats)))
+  cat(sprintf("95th percentile: %.2f\n",quantile(IncomePerCap_stats,0.95)))
+  cat(sprintf("99th percentile: %.2f\n",quantile(IncomePerCap_stats,0.99)))
+  cat(sprintf("IQR: %.2f\n",quantile(IncomePerCap_stats,0.75) - quantile(IncomePerCap_stats,0.25)))
+  cat(sprintf("coefficient of variation: %.2f\n",sd(IncomePerCap_stats)/mean(IncomePerCap_stats)))
+}
+
+summarystats_Income(Income_stats)
+
+summarystats_IncomePerCap(IncomePerCap_stats) 
+
+```
+
+```{r histo_dens}
+ggplot(county_df, aes(Income_stats)) + geom_histogram(color = 'white', na.rm = TRUE) + labs(x = 'Income')
+ggplot(county_df, aes(IncomePerCap_stats)) + geom_histogram(color = 'white', na.rm = TRUE) + labs(x = 'IncomePerCap')
+ggplot(county_df, aes(Income_stats)) + geom_density(color = 'black', na.rm = TRUE) + labs(x = 'Income')
+ggplot(county_df, aes(IncomePerCap_stats)) + geom_density(color = 'black', na.rm = TRUE) + labs(x = 'IncomePerCap')
+```
+
+
+Write a short paragraph describing the distribution of of these two variables.
+
+> From the graph plotted for Income variable, it can be understood that the graph has a asymmetrical and a positive distribution as it is skewed to the right. The mean is on the right of the peak value and the mean(49754.16) is greater than median(48065.5)
+> The graph for the Income_percap indiactes that it is asymmetrically distributed and positively skewed with mean(26039.64) greater than the median(25272.5)
+
+Repeat the histogram for Income but make the following style changes to the plot.
+
+* Add a title such as "Distribution of median income for US counties"
+* Change y-axis label to "Number of counties"
+* Change x-axis label to "Median income"
+* Change the colors of the bars to something other than the default
+
+```{r histo_stylechanges}
+ggplot(county_df, aes(Income_stats)) + geom_histogram(color =  'black', fill = 'light blue', na.rm = TRUE) + labs(title = 'Distribution of median income for US counties', x = 'Median income', y = 'Number of counties') + scale_x_continuous(Income_stats)
+```
+
+Now create a set of histograms for Income in which you facet by Division.
+
+```{r histos_division}
+options(scipen = 999)
+ggplot(county_df, aes(x=Income)) + 
+   geom_histogram(na.rm = TRUE) +
+    facet_grid(Division ~ .) + labs(title = "Histograms of Income", x = "Income", y = "Frequency")
+
+```
+
+Since the number of counties varies by Division, create a new version of the plot above but modify so that the y-axis shows frequency percentages instead of
+counts. Hint: `..density..`
+
+```{r histos_division_density}
+library(scales)
+ ggplot(county_df) + 
+   geom_histogram(aes(x = Income, y = ..density..), na.rm = TRUE) +
+   facet_grid(Division ~ .) + scale_y_continuous(labels = percent) + labs(title = "Histograms of Income", x = "Income", y = "Frequency")
+```
+
+
+Now create boxplots and violin plots for the same two variables. However, you'll
+see that for both of these plot types, ggplot wants an `x` aesthetic to act as a grouping variable. Use the `region` field as your `x` aesthetic. Note anything of interest revealed by these plots.
+
+```{r box_violin}
+# Boxplots and violin plots
+ggplot(county_df, aes(x = county_df$Region, y = Income_stats)) + geom_violin( fill = 'orange', na.rm = TRUE) + geom_boxplot( width = 0.1, na.rm = TRUE) + labs(x = 'Region', y = 'Income')
+```
+
+> Your interpretation ... Income of south is higher
+>
+
+Repeat the histogram of Income but only for counties with less than 500,000 people. Do NOT use
+dplyr to do the filtering - instead, use boolean indexing (see intro to dataframes Rmd file).
+
+```{r histo_lt1.5m1}
+county_df_filtered <- county_df[county_df$TotalPop < 500000, ]
+(ggplot(county_df[county_df$TotalPop < 500000, ], aes(x = log(TotalPop))) + geom_histogram( na.rm = TRUE, colour = 'blue', fill = 'lightblue') + labs(title = "Distribution of population less than 1.5 million", x = "Total Population", y = "Number of Counties")) 
+
+```
+
+**Hacker Extra** - Also create a kernel density plot of Income overlaid on a histogram of
+Income. 
+
+```{r hackerxtra_kdoverlay}
+ggplot(county_df, aes(x=Income)) + geom_histogram(aes(y=..density..), color = 'white', na.rm = TRUE) + geom_density(colour = 'red') + labs( x = 'Income')
+```
+
+### Problem 3 - How do Michigan's peninsulas compare?
+
+Create violin plots showing Income by peninsula. Make sure
+your graph has a title and good axis labels.
+
+```{r vp_inc_by_peninsula}
+ggplot(county_mi_df, aes(x = peninsula, y = Income)) + geom_violin(trim = FALSE, na.rm = TRUE, fill = 'orange') + labs(title = "Distribution of Income by Peninsula", x = "Peninsula", y = "Income") + geom_boxplot(width = 0.1, na.rm = TRUE)
+
+```
+
+Do the peninsulas 
+differ with respect to distribution of median income over the counties?
+
+> The median income for Upper Peninsula is lower than the Lower Peninsula. The shape of the distribution indicates that the income of Upper Peninsula counties are highly concentrated around the median where as for the Lower Peninsula the median income of counties has a wider distribution. In LP region, the median is closer to the first quartile which means distribution is skewed towards right. Also, the UP region seems to have approximately the normal distribution curve.
+
+Create several boxplots and/or violin plots showing how the peninsulas compare with respect to
+some of the other variables. Summarize your findings in a few short paragraphs.
+
+```{r boxplots_upvlp}
+ggplot(county_mi_df, aes(x = peninsula, y = Poverty)) + geom_violin(na.rm = TRUE, fill = "Orange", colour = "black") + geom_boxplot(width = 0.1, na.rm = TRUE)
+ggplot(county_mi_df, aes(x = peninsula, y = log(Employed))) + geom_violin(na.rm = TRUE, fill = "Orange", colour = "black") + geom_boxplot(width = 0.1, na.rm = TRUE)
+ggplot(county_mi_df, aes(x = peninsula, y = Unemployment)) + geom_violin(na.rm = TRUE, fill = "Orange", colour = "black") + geom_boxplot(width = 0.1, na.rm = TRUE)
+ggplot(county_mi_df, aes(x = peninsula, y = log(TotalPop))) + geom_violin(na.rm = TRUE, fill = "Orange", colour = "black") + geom_boxplot(width = 0.1, na.rm = TRUE)
+
+```
+
+> Povert Rate of Lower Peninsula counties is higher than Upper Peninsula counties. The boxplot of Lower Peninsula is skewed towards left whereas for Upper Peninsula, mean is greater than median and skewed towards right.
+>Total Population of Lower Peninsula counties is higher than Upper Peninsula counties * The boxplot of LP is approximately Normally distributed whereas for UP, Mean is grater than Median and skewed towards right.
+>Total Employed of Lower Peninsula counties is higher than Upper Peninsula counties * The boxplot of LP is seems normalized distributed whereas for UP, Median is towards the 1st quantile and skewed towards right.
+>Total Population of Lower Peninsula counties is higher than Upper Peninsula counties * The boxplot of LP is approximately Normally distributed whereas for UP, Mean is grater than Median and skewed towards right.
+
+### Problem 4 - Basic bar chart
+
+Create a bar chart showing the number of counties by State in the US. Make sure
+your graph has a title and good axis labels. Figure out how to format the
+x-axis labels so that they don't obscure each other.
+
+```{r bar_counties_by_state}
+ggplot(county_df, aes(x = State , y = length(County), fill = State)) + geom_bar(stat = "identity") + labs(title = "Number of Counties by State", x = "State", y = "Number of Counties") + theme(axis.text.x = element_text(angle = 90)) + guides(fill = FALSE)
+
+```
+
+**Hacker Extra** Modify the above bar plot to be horizontal and have bars sorted from longest to shortest. In addition, map the bar color to the Region variable.
+
+```{r bar_counties_by_state_hackerxtra, fig.height=6}
+options(scipen = 999)
+library(tidyverse)
+ggplot(county_df, aes(x = reorder(State, State, function(y) -length(y)) , y = length(County), fill = State)) + geom_bar(stat = "identity") + labs(title = "Number of Counties by State", x = "State", y = "Number of Counties") + theme(axis.text.x = element_text(angle = 90)) + guides(fill = FALSE)
+
+```
+
+### Problem 5 - Basic scatter plots
+
+Create a scatter plot using the Michigan only data frame comparing
+IncomePerCap and MeanCommute.
+
+```{r xy_inc_commute}
+ggplot(data = county_mi_df, aes(y = MeanCommute, x =  IncomePerCap)) + geom_point()
+```
+
+Create a modified version of the above scatter plot in which the point color
+is mapped to peninsula and the size is mapped to total population. In addition,
+create a similar plot comparing Income and Professional.
+
+```{r xy_inc_commute_peninsula}
+ggplot(data = county_mi_df, aes(x = Income, y = MeanCommute, color = peninsula, size = TotalPop )) + geom_point() + labs(title = "Scatter plot of Income by Mean Commute Time", x = " Income ($)", y = "Mean Commute Time (minutes)")
+
+ggplot(data = county_mi_df, aes(x = Income, y = MeanCommute, color = Professional, size = TotalPop )) + geom_point() + labs(title = "Scatter plot of Income by Mean Commute Time", x = "Professional", y = "Mean Commute Time (minutes)")
+
+```
+
+> There is a weak positive relation between Median houshold income and Mean commute time with a correlation coefficient of +0.27 - Counties with high populations have relatively higher MeanCommute Time
+>
+
+Now, create a few more scatter plots using variables of your choosing in which
+you facet by peninsula as well. How do the relationships compare across the
+peninsulas?
+
+
+```{r xy_faceted_peninsula1}
+ggplot(data = county_mi_df, aes(y = Unemployment, x =  log(TotalPop), color = peninsula )) + geom_point() + facet_grid(. ~ peninsula) 
+ggplot(data = county_mi_df, aes(y = IncomePerCap, x =  log(TotalPop), color = peninsula )) + geom_point() + facet_grid(. ~ peninsula)
+ggplot(data = county_mi_df, aes(y = Income, x =  log(TotalPop), color = peninsula )) + geom_point() + facet_grid(. ~ peninsula)
+
+```
+
+Now use the full US data frame, county_df.
+
+Create a scatter plot of TotalPop by IncomePerCap.
+
+```{r xy_pop_inc}
+ggplot(data = county_df, aes(x =  TotalPop, y = IncomePerCap , color = IncomePerCap )) + geom_point(na.rm = TRUE ) + labs(title = "Scatter plot of TotalPop by IncomePerCap", x = "Total Population", y = "IncomePerCap ($)`")
+```
+
+
+The widely varying values make this difficult to interpret in terms of looking
+for patterns. So, figure out a way to either change the axis scales or 
+the plotted data itself to use a base 10 logarithmic scale (or transform).
+Write a short paragraph on why one might want to use a log scale or log
+transform of data when plotting.
+
+
+```{r log10}
+ggplot(data = county_df, aes(x =  log(TotalPop), y = IncomePerCap , color = IncomePerCap )) + geom_point(na.rm = TRUE ) + labs(title = "Scatter plot of TotalPop by IncomePerCap", x = "Total Population", y = "IncomePerCap ($)`")
+```
+
+>  Log transformation is used to make highly skewed distributions less skewed. This can be useful for making pattern in the data more interpretable.
+
+## Deliverables
+
+Make sure you knit your Rmd file. As discussed earlier, if you have errors, your document won't knit. Comment out error lines and put a comment in saying that you couldn't get the line to work. After your file is knitted into an html file, simply create a compressed archive (either tar.gz or .zip) of your project folder and upload the compressed archive file into Moodle.
